@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Notify all watchers that a sharer is available
             Array.from(clients.entries()).forEach(([id, client]) => {
-              if (client.type === 'watcher' && client.socket.readyState === WebSocket.OPEN) {
+              if (client.type === 'watcher' && client.socket.readyState === ws.WebSocket.OPEN) {
                 console.log(`Notifying watcher ${id} that sharer is available`);
                 client.socket.send(JSON.stringify({ type: 'sharer-connected' }));
               }

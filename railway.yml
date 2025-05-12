@@ -1,0 +1,5 @@
+build:
+  dockerfile: Dockerfile.railway
+
+deploy:
+  startCommand: node dist/index.js

@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs", "npm"]
 
 [phases.install]
-cmds = ["npm cache clean --force", "npm ci --no-cache"]
+cmds = ["npm install --no-fund"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run railway:build"]
 
 [start]
 cmd = "npm run start" 

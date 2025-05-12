@@ -1,30 +1,21 @@
-FROM node:18.17-alpine
+FROM node:18-slim
 
-# Create app directory
 WORKDIR /app
 
-# Set environment variable
-ENV NODE_ENV=production
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Copy package files first for better layer caching
-COPY package*.json ./
+# Install dependencies with legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
-# Clean install without using cache
-RUN npm config set progress=false && \
-    npm config set cache /tmp/npm-cache && \
-    npm ci
-
-# Copy app source
+# Copy application code
 COPY . .
 
-# Build the app
+# Build the application
 RUN npm run build
 
-# Remove dev dependencies for smaller image
-RUN npm prune --production
+# Expose the port
+EXPOSE 8080
 
-# Expose port
-EXPOSE 5000
-
-# Start the app
+# Start the application
 CMD ["node", "dist/index.js"] 

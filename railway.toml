@@ -1,12 +1,16 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "chmod +x build.sh && ./build.sh"
+builder = "nixpacks"
+buildCommand = "npm run railway:build"
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "npm start"
 healthcheckPath = "/api/status"
-healthcheckTimeout = 100
+healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
 
 [env]
-NODE_ENV = "production" 
+NODE_ENV = "production"
+
+[nixpacks]
+nixPkgs = ["nodejs", "npm"] 

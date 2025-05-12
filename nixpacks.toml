@@ -5,7 +5,11 @@ nixPkgs = ["nodejs", "npm"]
 cmds = ["npm install --no-fund"]
 
 [phases.build]
-cmds = ["npm run railway:build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "npm run start" 
+cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"
+PORT = "8080" 

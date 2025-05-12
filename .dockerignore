@@ -3,7 +3,11 @@ dist
 .git
 .gitignore
 .env
-npm-debug.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
 .DS_Store
 .vscode
 *.log 

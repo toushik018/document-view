@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "dist/public",
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/server-vercel" }],
+  "functions": {
+    "api/server-vercel.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}

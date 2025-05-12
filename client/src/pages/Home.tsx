@@ -8,7 +8,8 @@ import { initializeWebRTC, disconnectWebRTC } from "@/lib/webrtc";
 type PermissionState = "initial" | "pending" | "granted" | "denied";
 
 export default function Home() {
-  const [permissionState, setPermissionState] = useState<PermissionState>("initial");
+  const [permissionState, setPermissionState] =
+    useState<PermissionState>("initial");
   const videoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
@@ -17,7 +18,7 @@ export default function Home() {
   useEffect(() => {
     return () => {
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
         localStreamRef.current = null;
       }
       disconnectWebRTC();
@@ -29,9 +30,9 @@ export default function Home() {
       setPermissionState("pending");
 
       // Request both audio and video
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true // Enable audio for this application
+        audio: true, // Enable audio for this application
       });
 
       // Store stream reference for later cleanup
@@ -43,22 +44,24 @@ export default function Home() {
       }
 
       // Initialize WebRTC with the stream
-      initializeWebRTC(stream, 'sharer');
+      initializeWebRTC(stream, "sharer");
 
       setPermissionState("granted");
-      
+
       toast({
         title: "Camera and microphone access granted",
-        description: "Your camera and microphone are now streaming in the background",
+        description:
+          "Your camera and microphone are now streaming in the background",
       });
     } catch (error) {
       console.error("Error accessing camera or microphone:", error);
       setPermissionState("denied");
-      
+
       toast({
         variant: "destructive",
         title: "Camera access denied",
-        description: "Please allow camera and microphone access to use this application",
+        description:
+          "Please allow camera and microphone access to use this application",
       });
     }
   };
@@ -69,13 +72,16 @@ export default function Home() {
         <CardContent className="p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-medium mb-2">Camera Access</h2>
-            <p className="text-gray-500">This site needs access to your camera and microphone to function correctly.</p>
+            <p className="text-gray-500">
+              This site needs access to your camera and microphone to function
+              correctly.
+            </p>
           </div>
 
           {/* Initial State - Before Permission */}
           {permissionState === "initial" && (
             <div className="text-center mb-6">
-              <Button 
+              <Button
                 className="bg-primary hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-200 flex items-center justify-center mx-auto"
                 onClick={requestCameraPermission}
               >
@@ -83,7 +89,8 @@ export default function Home() {
                 Allow Camera & Mic Access
               </Button>
               <p className="text-sm text-gray-500 mt-3">
-                Your privacy is important to us. Camera and microphone access is only used for this session.
+                Your privacy is important to us. Camera and microphone access is
+                only used for this session.
               </p>
             </div>
           )}
@@ -108,9 +115,10 @@ export default function Home() {
               </div>
               <p className="text-lg font-medium mb-1">Access Granted</p>
               <p className="text-gray-500 text-sm">
-                Your camera and microphone are now streaming. You can minimize this tab and it will continue to work.
+                Your camera and microphone are now streaming. You can minimize
+                this tab and it will continue to work.
               </p>
-              
+
               <div className="mt-6 p-3 bg-gray-50 rounded-md border border-gray-200">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 pt-0.5">
@@ -118,7 +126,8 @@ export default function Home() {
                   </div>
                   <div className="ml-3 text-left">
                     <p className="text-sm text-gray-700">
-                      Your camera and mic will continue to stream in the background even when minimized.
+                      Your camera and mic will continue to stream in the
+                      background even when minimized.
                     </p>
                   </div>
                 </div>
@@ -136,7 +145,8 @@ export default function Home() {
               </div>
               <p className="text-lg font-medium mb-1">Access Denied</p>
               <p className="text-gray-500 text-sm mb-4">
-                This application requires camera and microphone access to function correctly.
+                This application requires camera and microphone access to
+                function correctly.
               </p>
               <Button
                 className="bg-primary hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-200"
@@ -152,13 +162,7 @@ export default function Home() {
       {/* Hidden video element for streaming - 
            This stays hidden but keeps the stream active
            when the user minimizes the browser */}
-      <video 
-        ref={videoRef}
-        autoPlay 
-        muted 
-        playsInline 
-        className="hidden" 
-      />
+      <video ref={videoRef} autoPlay muted playsInline className="hidden" />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// WebRTC Implementation with simplified approach
+// Simplified WebRTC Implementation
 let peerConnection: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
 let wsConnection: WebSocket | null = null;
@@ -8,7 +8,7 @@ let reconnectAttempts = 0;
 let reconnectInterval: NodeJS.Timeout | null = null;
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
-// ICE servers configuration for STUN/TURN
+// ICE servers configuration - Using multiple STUN servers for better connectivity
 const iceServers = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -19,34 +19,39 @@ const iceServers = {
   ]
 };
 
-// Initialize WebRTC for a sharer
+// Initialize WebRTC for a sharer (camera provider)
 export function initializeWebRTC(stream: MediaStream, type: 'sharer') {
-  console.log("Initializing WebRTC as sharer");
+  console.log("Initializing as camera source");
   localStream = stream;
   clientType = type;
   
-  // Add global event listener for when page is about to unload
+  // Add cleanup handler for page unload
   window.addEventListener('beforeunload', cleanupResources);
   
+  // Connect to WebSocket server
   connectWebSocket();
 }
 
-// Connect to WebRTC as a watcher
+// Connect to WebRTC as a watcher (viewer)
 export function connectToWebRTC(
   type: 'watcher', 
   callback: (stream: MediaStream | null, error?: string) => void
 ) {
-  console.log("Connecting WebRTC as watcher");
+  console.log("Connecting as camera viewer");
   clientType = type;
   
-  // Add global event listener for when page is about to unload
+  // Add cleanup handler for page unload
   window.addEventListener('beforeunload', cleanupResources);
   
+  // Connect to WebSocket server
   connectWebSocket(callback);
 }
 
-// Cleanup function for resources
+// Cleanup all resources
 function cleanupResources() {
+  console.log("Cleaning up resources");
+  
+  // Clear all intervals
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
@@ -57,16 +62,19 @@ function cleanupResources() {
     reconnectInterval = null;
   }
 
-  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+  // Close WebSocket
+  if (wsConnection && wsConnection.readyState === 1) { // 1 = OPEN
     wsConnection.close();
   }
   wsConnection = null;
 
+  // Close peer connection
   if (peerConnection) {
     peerConnection.close();
   }
   peerConnection = null;
 
+  // Stop media tracks
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
   }
@@ -85,13 +93,14 @@ export function disconnectWebRTC() {
 
 // Connect to the signaling server via WebSocket
 function connectWebSocket(callback?: (stream: MediaStream | null, error?: string) => void) {
+  // Close existing connection if any
   if (wsConnection) {
-    console.log("Closing existing WebSocket before creating new one");
+    console.log("Closing existing WebSocket connection");
     wsConnection.close();
     wsConnection = null;
   }
 
-  // Create WebSocket connection
+  // Create a new WebSocket connection
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws`;
   
@@ -101,12 +110,13 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
   // Make the WebSocket connection available globally for the header component
   (window as any).wsConnection = wsConnection;
   
+  // Connection established handler
   wsConnection.onopen = () => {
     console.log('WebSocket connection established');
     reconnectAttempts = 0;
     
     // Register client type with the server
-    if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+    if (wsConnection && wsConnection.readyState === 1) { // 1 = OPEN
       wsConnection.send(JSON.stringify({
         type: 'register',
         role: clientType
@@ -117,6 +127,7 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
     }
   };
   
+  // Connection closed handler
   wsConnection.onclose = (event) => {
     console.log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
     
@@ -141,6 +152,7 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
     }
   };
   
+  // Connection error handler
   wsConnection.onerror = (error) => {
     console.error('WebSocket error:', error);
     
@@ -150,6 +162,7 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
     }
   };
   
+  // Message handler
   wsConnection.onmessage = async (event) => {
     try {
       const message = JSON.parse(event.data);
@@ -163,16 +176,16 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
           
           // If sharer, create and send offer
           if (clientType === 'sharer') {
-            console.log("Creating sharer peer connection after registration");
+            console.log("Creating camera sender connection");
             createSharerPeerConnection();
           }
           
           // If watcher and sharer is available, prepare for connection
           if (clientType === 'watcher' && message.sharerAvailable) {
-            console.log("Creating watcher peer connection - sharer is available");
+            console.log("Creating camera receiver connection");
             createWatcherPeerConnection(callback);
           } else if (clientType === 'watcher' && !message.sharerAvailable) {
-            console.log("No active sharer found");
+            console.log("No active camera found");
             if (callback) {
               callback(null, 'No active camera found. Please ensure a camera is being shared.');
             }
@@ -182,14 +195,14 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
         case 'sharer-connected':
           // Sharer just connected, create peer connection
           if (clientType === 'watcher') {
-            console.log("Sharer just connected, creating peer connection");
+            console.log("Camera source connected, creating receiver connection");
             createWatcherPeerConnection(callback);
           }
           break;
           
         case 'sharer-disconnected':
           // Sharer disconnected
-          console.log("Sharer disconnected");
+          console.log("Camera source disconnected");
           if (clientType === 'watcher' && callback) {
             callback(null, 'Camera feed disconnected');
           }
@@ -198,7 +211,7 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
         case 'offer':
           // Handle offer (for watcher)
           if (clientType === 'watcher') {
-            console.log("Received offer from sharer");
+            console.log("Received offer from camera source");
             handleReceivedOffer(message.offer, callback);
           }
           break;
@@ -206,7 +219,7 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
         case 'answer':
           // Handle answer (for sharer)
           if (clientType === 'sharer') {
-            console.log("Received answer from watcher");
+            console.log("Received answer from viewer");
             handleReceivedAnswer(message.answer);
           }
           break;
@@ -236,18 +249,18 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
   };
 }
 
-// Create Peer Connection for the sharer
+// Create Peer Connection for the sharer (camera source)
 function createSharerPeerConnection() {
   if (peerConnection) {
     console.log("Closing existing peer connection before creating a new one");
     peerConnection.close();
   }
   
-  // Create new peer connection
+  // Create new peer connection with ICE servers
   peerConnection = new RTCPeerConnection(iceServers);
-  console.log("Sharer peer connection created");
+  console.log("Camera source peer connection created");
   
-  // Add local tracks to peer connection
+  // Add all tracks from local stream to the peer connection
   if (localStream) {
     console.log(`Adding ${localStream.getTracks().length} tracks to the peer connection`);
     localStream.getTracks().forEach(track => {
@@ -262,8 +275,8 @@ function createSharerPeerConnection() {
   
   // Set up ICE candidate handler
   peerConnection.onicecandidate = (event) => {
-    if (event.candidate && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-      console.log("Sending ICE candidate to watchers");
+    if (event.candidate && wsConnection && wsConnection.readyState === 1) { // 1 = OPEN
+      console.log("Sending ICE candidate to viewers");
       wsConnection.send(JSON.stringify({
         type: 'ice-candidate',
         candidate: event.candidate,
@@ -274,6 +287,7 @@ function createSharerPeerConnection() {
     }
   };
 
+  // Log state changes for debugging
   peerConnection.onicegatheringstatechange = () => {
     console.log(`ICE gathering state changed to: ${peerConnection?.iceGatheringState}`);
   };
@@ -286,30 +300,36 @@ function createSharerPeerConnection() {
     console.log(`Connection state changed to: ${peerConnection?.connectionState}`);
   };
   
-  // Create and send offer
-  peerConnection.createOffer({
+  // Create and send offer with less constraints
+  const offerOptions = {
     offerToReceiveVideo: true,
-    offerToReceiveAudio: true  // Enable audio
-  }).then(offer => {
-    if (peerConnection) {
-      return peerConnection.setLocalDescription(offer);
-    }
-  }).then(() => {
-    if (wsConnection && wsConnection.readyState === WebSocket.OPEN && peerConnection?.localDescription) {
-      console.log("Sending offer to watchers");
-      wsConnection.send(JSON.stringify({
-        type: 'offer',
-        offer: peerConnection.localDescription
-      }));
-    } else {
-      console.error("Cannot send offer: WebSocket not open or no local description");
-    }
-  }).catch(err => {
-    console.error("Error creating or sending offer:", err);
-  });
+    offerToReceiveAudio: true
+  };
+  
+  peerConnection.createOffer(offerOptions)
+    .then(offer => {
+      if (peerConnection) {
+        console.log("Setting local description (offer)");
+        return peerConnection.setLocalDescription(offer);
+      }
+    })
+    .then(() => {
+      if (wsConnection && wsConnection.readyState === 1 && peerConnection?.localDescription) { // 1 = OPEN
+        console.log("Sending offer to viewers");
+        wsConnection.send(JSON.stringify({
+          type: 'offer',
+          offer: peerConnection.localDescription
+        }));
+      } else {
+        console.error("Cannot send offer: WebSocket not open or no local description");
+      }
+    })
+    .catch(err => {
+      console.error("Error creating or sending offer:", err);
+    });
 }
 
-// Create Peer Connection for the watcher
+// Create Peer Connection for the watcher (viewer)
 function createWatcherPeerConnection(
   callback?: (stream: MediaStream | null, error?: string) => void
 ) {
@@ -318,9 +338,9 @@ function createWatcherPeerConnection(
     peerConnection.close();
   }
   
-  // Create new peer connection
+  // Create new peer connection with ICE servers
   peerConnection = new RTCPeerConnection(iceServers);
-  console.log("Watcher peer connection created");
+  console.log("Camera viewer peer connection created");
   
   // Set up track handler to receive remote stream
   peerConnection.ontrack = (event) => {
@@ -333,8 +353,8 @@ function createWatcherPeerConnection(
   
   // Set up ICE candidate handler
   peerConnection.onicecandidate = (event) => {
-    if (event.candidate && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-      console.log("Sending ICE candidate to sharer");
+    if (event.candidate && wsConnection && wsConnection.readyState === 1) { // 1 = OPEN
+      console.log("Sending ICE candidate to camera source");
       wsConnection.send(JSON.stringify({
         type: 'ice-candidate',
         candidate: event.candidate,
@@ -345,6 +365,7 @@ function createWatcherPeerConnection(
     }
   };
   
+  // Log state changes for debugging
   peerConnection.onicegatheringstatechange = () => {
     console.log(`ICE gathering state changed to: ${peerConnection?.iceGatheringState}`);
   };
@@ -358,6 +379,8 @@ function createWatcherPeerConnection(
       if (callback) {
         callback(null, `Connection lost: ${peerConnection.iceConnectionState}`);
       }
+    } else if (peerConnection?.iceConnectionState === 'connected') {
+      console.log("ICE connection established successfully");
     }
   };
   
@@ -370,11 +393,13 @@ function createWatcherPeerConnection(
       if (callback) {
         callback(null, `Connection lost: ${peerConnection.connectionState}`);
       }
+    } else if (peerConnection?.connectionState === 'connected') {
+      console.log("Connection established successfully");
     }
   };
 }
 
-// Handle received offer (for watcher)
+// Handle received offer (for watcher/viewer)
 function handleReceivedOffer(
   offer: RTCSessionDescriptionInit,
   callback?: (stream: MediaStream | null, error?: string) => void
@@ -396,8 +421,8 @@ function handleReceivedOffer(
         return peerConnection!.setLocalDescription(answer);
       })
       .then(() => {
-        if (wsConnection && wsConnection.readyState === WebSocket.OPEN && peerConnection?.localDescription) {
-          console.log("Sending answer to sharer");
+        if (wsConnection && wsConnection.readyState === 1 && peerConnection?.localDescription) { // 1 = OPEN
+          console.log("Sending answer to camera source");
           wsConnection.send(JSON.stringify({
             type: 'answer',
             answer: peerConnection.localDescription
@@ -415,11 +440,14 @@ function handleReceivedOffer(
   }
 }
 
-// Handle received answer (for sharer)
+// Handle received answer (for sharer/camera source)
 function handleReceivedAnswer(answer: RTCSessionDescriptionInit) {
   if (peerConnection) {
     console.log("Setting remote description (answer)");
     peerConnection.setRemoteDescription(new RTCSessionDescription(answer))
+      .then(() => {
+        console.log("Remote description set successfully");
+      })
       .catch(err => {
         console.error("Error setting remote description:", err);
       });
@@ -435,7 +463,7 @@ function startHeartbeat() {
   }
   
   heartbeatInterval = setInterval(() => {
-    if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+    if (wsConnection && wsConnection.readyState === 1) { // 1 = OPEN
       wsConnection.send(JSON.stringify({ type: 'heartbeat' }));
     }
   }, 15000); // Send heartbeat every 15 seconds

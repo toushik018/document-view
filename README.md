@@ -22,53 +22,31 @@ npm run dev
 
 ## Deployment to Railway
 
-### Method 1: Using Railway CLI
-
-1. Install the Railway CLI:
-
-   ```bash
-   npm i -g @railway/cli
-   ```
-
-2. Login to Railway:
-
-   ```bash
-   railway login
-   ```
-
-3. Initialize your project:
-
-   ```bash
-   railway init
-   ```
-
-4. Deploy your project:
-   ```bash
-   railway up
-   ```
-
-### Method 2: Using Railway Dashboard
+### Docker-based Deployment (Recommended)
 
 1. Create a Railway account at https://railway.app
-2. Install the Railway CLI and login (optional but recommended)
-3. Click "New Project" in the Railway dashboard
-4. Select "Deploy from GitHub repo"
-5. Connect your GitHub repository
-6. Railway will use our configuration files:
-   - `railway.toml` - Railway project configuration
-   - `nixpacks.toml` - Build environment configuration
-   - `build.sh` - Custom build script
-   - `.npmrc` - NPM configuration to ensure dependencies are installed correctly
+2. Click "New Project" in the Railway dashboard
+3. Select "Deploy from GitHub repo"
+4. Connect your GitHub repository
+5. Railway will automatically detect the Dockerfile and use it for deployment
+6. Add environment variable: `NODE_ENV=production`
 7. Deploy the application
+
+The Docker-based deployment uses:
+
+- `Dockerfile` - Container configuration
+- `.dockerignore` - Files to exclude from the container
+- `railway.json` - Railway configuration
 
 ### Troubleshooting Railway Deployment
 
 If you encounter build failures, try these steps:
 
 1. In the Railway dashboard, go to your project settings
-2. Under Environment, add the variable `NODE_ENV=production`
+2. Under Environment, make sure `NODE_ENV=production` is set
 3. Make sure the "Watch" tab is enabled to see build logs
-4. If needed, force a clean build by clicking "Redeploy" and selecting "Clear build cache"
+4. Try a clean build by clicking "Redeploy" and selecting "Clear build cache"
+5. If Docker build fails, you can switch to Nixpacks by editing railway.json and changing the builder to "NIXPACKS"
 
 ## Usage
 

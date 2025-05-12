@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs", "npm"]
 
 [phases.install]
-cmds = ["npm ci --include=dev"]
+cmds = ["npm cache clean --force", "npm ci --no-cache"]
 
 [phases.build]
 cmds = ["npm run build"]

@@ -6,7 +6,8 @@ WORKDIR /app
 # Install dependencies and build
 FROM base AS builder
 COPY package*.json ./
-RUN npm install --no-fund
+# Use clean-install with explicit cache clear to avoid cache locking issues
+RUN npm cache clean --force && npm ci --no-cache
 COPY . .
 RUN npm run build
 
@@ -15,7 +16,7 @@ FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev --no-fund
+RUN npm ci --omit=dev --no-cache
 
 # Expose port
 EXPOSE 5000

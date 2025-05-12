@@ -28,13 +28,12 @@ npm run dev
 2. Click "New Project" in the Railway dashboard
 3. Select "Deploy from GitHub repo"
 4. Connect your GitHub repository
-5. Railway will automatically detect the Dockerfile and use it for deployment
-6. Add environment variable: `NODE_ENV=production`
-7. Deploy the application
+5. Railway will automatically detect the Dockerfile.railway specified in railway.json
+6. Deploy the application
 
 The Docker-based deployment uses:
 
-- `Dockerfile` - Container configuration
+- `Dockerfile.railway` - Multi-stage Docker build for Railway
 - `.dockerignore` - Files to exclude from the container
 - `railway.json` - Railway configuration
 
@@ -43,10 +42,9 @@ The Docker-based deployment uses:
 If you encounter build failures, try these steps:
 
 1. In the Railway dashboard, go to your project settings
-2. Under Environment, make sure `NODE_ENV=production` is set
-3. Make sure the "Watch" tab is enabled to see build logs
-4. Try a clean build by clicking "Redeploy" and selecting "Clear build cache"
-5. If Docker build fails, you can switch to Nixpacks by editing railway.json and changing the builder to "NIXPACKS"
+2. Make sure the "Watch" tab is enabled to see build logs
+3. Try a clean build by clicking "Redeploy" and selecting "Clear build cache"
+4. If Docker build still fails, contact Railway support and share your build logs
 
 ## Usage
 

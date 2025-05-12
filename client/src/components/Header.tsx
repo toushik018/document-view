@@ -10,10 +10,9 @@ export default function Header() {
     // On watch page, we'd update this based on the actual websocket state
     if (location === "/watch") {
       const checkInterval = setInterval(() => {
-        // This would be replaced with actual connection check
-        const isWsConnected = Boolean(
-          window.wsConnectionStatus?.readyState === WebSocket.OPEN
-        );
+        // Check for actual websocket connection
+        const connection = (window as any).wsConnection; 
+        const isWsConnected = Boolean(connection && connection.readyState === 1);
         setConnectionStatus(isWsConnected ? "connected" : "disconnected");
       }, 1000);
       

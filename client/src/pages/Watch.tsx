@@ -239,7 +239,8 @@ export default function Watch() {
             <video 
               ref={videoRef}
               autoPlay 
-              playsInline 
+              playsInline
+              controls
               className="w-full h-full object-contain" 
             />
             

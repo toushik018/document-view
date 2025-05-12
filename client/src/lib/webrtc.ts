@@ -98,6 +98,9 @@ function connectWebSocket(callback?: (stream: MediaStream | null, error?: string
   console.log(`Connecting to WebSocket at ${wsUrl}`);
   wsConnection = new WebSocket(wsUrl);
   
+  // Make the WebSocket connection available globally for the header component
+  (window as any).wsConnection = wsConnection;
+  
   wsConnection.onopen = () => {
     console.log('WebSocket connection established');
     reconnectAttempts = 0;

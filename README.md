@@ -20,57 +20,65 @@ npm install
 npm run dev
 ```
 
-## Deployment Options
+## Deployment to Railway
 
-### Deploy to Render
+### Method 1: Using Railway CLI
 
-1. Create a Render account at https://render.com
-2. Connect your GitHub/GitLab repository
-3. Click "New Web Service"
-4. Select your repository
-5. Configure the service:
-   - Name: secretcamerastream (or your preferred name)
-   - Environment: Node
-   - Build Command: `npm ci && npm run build`
-   - Start Command: `npm run start`
-   - Add environment variable: `NODE_ENV` = `production`
-6. Click "Create Web Service"
+1. Install the Railway CLI:
 
-Alternatively, you can use the provided `render.yaml` file for Blueprint deployment:
+   ```bash
+   npm i -g @railway/cli
+   ```
 
-1. Go to https://render.com/docs/blueprint-spec
-2. Follow instructions to deploy using the YAML configuration
+2. Login to Railway:
 
-### Deploy to Railway
+   ```bash
+   railway login
+   ```
+
+3. Initialize your project:
+
+   ```bash
+   railway init
+   ```
+
+4. Deploy your project:
+   ```bash
+   railway up
+   ```
+
+### Method 2: Using Railway Dashboard
 
 1. Create a Railway account at https://railway.app
-2. Click "New Project" and select "Deploy from GitHub repo"
-3. Configure the deployment:
-   - Build Command: `npm ci && npm run build`
-   - Start Command: `npm run start`
-   - Add environment variable: `NODE_ENV` = `production`
-4. Deploy the application
+2. Install the Railway CLI and login (optional but recommended)
+3. Click "New Project" in the Railway dashboard
+4. Select "Deploy from GitHub repo"
+5. Connect your GitHub repository
+6. Railway will use our configuration files:
+   - `railway.toml` - Railway project configuration
+   - `nixpacks.toml` - Build environment configuration
+   - `build.sh` - Custom build script
+   - `.npmrc` - NPM configuration to ensure dependencies are installed correctly
+7. Deploy the application
 
-### Deploy to DigitalOcean App Platform
+### Troubleshooting Railway Deployment
 
-1. Create a DigitalOcean account
-2. Go to App Platform and click "Create App"
-3. Connect your GitHub repository
-4. Configure the deployment:
-   - Build Command: `npm ci && npm run build`
-   - Run Command: `npm run start`
-   - Add environment variable: `NODE_ENV` = `production`
-5. Deploy the application
+If you encounter build failures, try these steps:
 
-## Environment Variables
-
-- `NODE_ENV`: Set to `production` for production deployments
-- `PORT`: (Optional) Port to run the server on, defaults to 5000
+1. In the Railway dashboard, go to your project settings
+2. Under Environment, add the variable `NODE_ENV=production`
+3. Make sure the "Watch" tab is enabled to see build logs
+4. If needed, force a clean build by clicking "Redeploy" and selecting "Clear build cache"
 
 ## Usage
 
 1. On the sharing device, visit the application and grant camera permissions
 2. On the viewing device, visit the `/watch` route to view the camera feed
+
+## Environment Variables
+
+- `NODE_ENV`: Set to `production` for production deployments
+- `PORT`: (Optional) Port to run the server on, defaults to 5000
 
 ## Notes
 
